@@ -40,9 +40,9 @@ class Scanner(object):
         self.domain = urlparse.urlparse(sys.argv[-1]).netloc.replace(':', '_')
         print('[+] Download and parse index file ...')
         try:
-            data = self._request_data(sys.argv[-1] + '/index')
+            data = self._request_data(f'{sys.argv[-1]}/index')
         except Exception as e:
-            print('[ERROR] index file download failed: %s' % str(e))
+            print(f'[ERROR] index file download failed: {str(e)}')
             exit(-1)
         with open('index', 'wb') as f:
             f.write(data)
@@ -56,7 +56,7 @@ class Scanner(object):
                 if self.is_valid_name(entry_name):
                     self.queue.put((entry["sha1"].strip(), entry_name))
                     try:
-                        print('[+] %s' % entry['name'])
+                        print(f"[+] {entry['name']}")
                     except Exception as e:
                         pass
 
@@ -66,11 +66,11 @@ class Scanner(object):
 
     def is_valid_name(self, entry_name):
         if entry_name.find('..') >= 0 or \
-                entry_name.startswith('/') or \
-                entry_name.startswith('\\') or \
-                not os.path.abspath(os.path.join(self.domain, entry_name)).startswith(self.dest_dir):
+                    entry_name.startswith('/') or \
+                    entry_name.startswith('\\') or \
+                    not os.path.abspath(os.path.join(self.domain, entry_name)).startswith(self.dest_dir):
             try:
-                print('[ERROR] Invalid entry name: %s' % entry_name)
+                print(f'[ERROR] Invalid entry name: {entry_name}')
             except Exception as e:
                 pass
             return False
@@ -95,14 +95,14 @@ class Scanner(object):
                 sha1, file_name = self.queue.get(timeout=0.5)
             except Exception as e:
                 break
-            for i in range(3):
+            for _ in range(3):
                 try:
-                    folder = '/objects/%s/' % sha1[:2]
+                    folder = f'/objects/{sha1[:2]}/'
                     data = self._request_data(self.base_url + folder + sha1[2:])
                     try:
                         data = zlib.decompress(data)
                     except:
-                        self._print('[Error] Fail to decompress %s' % file_name)
+                        self._print(f'[Error] Fail to decompress {file_name}')
                     # data = re.sub(r'blob \d+\00', '', data)
                     try:
                         data = re.sub(r'blob \d+\00', '', data)
@@ -113,14 +113,14 @@ class Scanner(object):
                         os.makedirs(target_dir)
                     with open(os.path.join(self.domain, file_name), 'wb') as f:
                         f.write(data)
-                    self._print('[OK] %s' % file_name)
+                    self._print(f'[OK] {file_name}')
                     break
                 except urllib2.HTTPError as e:
-                    if str(e).find('HTTP Error 404') >= 0:
-                        self._print('[File not found] %s' % file_name)
+                    if 'HTTP Error 404' in str(e):
+                        self._print(f'[File not found] {file_name}')
                         break
                 except Exception as e:
-                    self._print('[Error] %s' % str(e))
+                    self._print(f'[Error] {str(e)}')
         self.exit_thread()
 
     def exit_thread(self):
@@ -129,7 +129,7 @@ class Scanner(object):
         self.lock.release()
 
     def scan(self):
-        for i in range(self.thread_count):
+        for _ in range(self.thread_count):
             t = threading.Thread(target=self.get_back_file)
             t.start()
 
