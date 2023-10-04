@@ -13,7 +13,7 @@ import sys
 def check(boolean, message):
     if not boolean:
         import sys
-        print("error: " + message)
+        print(f"error: {message}")
         sys.exit(1)
 
 
@@ -24,7 +24,7 @@ def parse(filename, pretty=True):
         def read(format):
             # "All binary numbers are in network byte order."
             # Hence "!" = network order, big endian
-            format = "! " + format
+            format = f"! {format}"
             bytes = f.read(struct.calcsize(format))
             return struct.unpack(format, bytes)[0]
 
@@ -36,8 +36,7 @@ def parse(filename, pretty=True):
 
         # 4-byte version number
         index["version"] = read("I")
-        check(index["version"] in {2, 3},
-            "Unsupported version: %s" % index["version"])
+        check(index["version"] in {2, 3}, f'Unsupported version: {index["version"]}')
 
         # 32-bit number of index entries, i.e. 4-byte
         index["entries"] = read("I")
@@ -123,10 +122,10 @@ def parse(filename, pretty=True):
 
             padlen = (8 - (entrylen % 8)) or 8
             nuls = f.read(padlen)
-            check(set(nuls) == set(['\x00']) or set(nuls) == set(b'\x00'), "padding contained non-NUL")
-            
+            check(set(nuls) in [{'\x00'}, set(b'\x00')], "padding contained non-NUL")
+
             yield entry
-                
+
         f.close()
 
 
